@@ -1,0 +1,14 @@
+Given Estimator	 Nuisance Estimator	 Mean			         Median			          Standard deviation
+Tf-idf vectors
+MLPRegressor	MLPRegressor	    -0.043372538856737905	 -0.01474267750244574	  0.09815391819684226
+MLPClassifier	MLPRegressor	    -0.07856102338683171	  0.012312925644058944	  0.25165035441288625
+
+word2vecwith genism
+MLPRegressor	MLPRegressor         0.23854694917620983        1.370613588649857       0.2179803547149901
+MLPClassifier	MLPRegressor	     0.30829961476977324        1.725588052639946       0.31550324267229907
+
+word2vecwith tensorflow
+MLPRegressor	MLPRegressor          5.563229210262547         0.6239364969992542       8.862306575846894
+MLPClassifier	MLPRegressor	     -0.24168838648535268       0.060432166221439335     0.5448986986178319
+
+
