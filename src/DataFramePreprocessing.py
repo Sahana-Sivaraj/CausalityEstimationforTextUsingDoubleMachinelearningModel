@@ -18,7 +18,7 @@ from sklearn.decomposition import IncrementalPCA    # inital reduction
 from sklearn.manifold import TSNE                   # final reduction
 from textblob import Word
 from tqdm import tqdm
-
+import Re ReviewSimulation
 
 class DataFramePreprocesser:
     def __init__(self,
@@ -102,17 +102,9 @@ class DataFramePreprocesser:
         # step 4: for text-based confounder, use extracted vocabulary as features
         if self.text_col is not None:
             if self.word_vec==True:
-                # vectors = self.loadWord2Vecfeatures(data)
-                # labels = np.asarray(self.word2vec_model.wv.index_to_key)
-                # indices = [self.word2vec_model.wv.index_to_key.index(w) for w in labels]  # The numerical indices of those words
-                # vectors = [self.word2vec_model.wv.get_vector(w) for w in indices]
-
-                # print(indices)
-                # vocab_df = pd.DataFrame(vectors,index=labels)
-                vocab_df=pd.read_csv("word2vec/word2vectfmodel/word2vec_tf.csv");
-                print(vocab_df.head(5))
-                # vocab_df = pd.DataFrame(vectors)
-                # vocab_df.to_csv("train_review_word2vec.csv")
+                vectors = self.loadWord2Vecfeatures(data)
+                vocab_df = pd.DataFrame(vectors)
+                vocab_df.to_csv("train_review_word2vec.csv")
                 X = pd.concat([X, vocab_df], axis=1, join='inner')
                 print(X.head(5))
             else:
@@ -272,56 +264,6 @@ class DataFramePreprocesser:
         data.to_csv("finalword2vec.csv")
 
 
-def estimate_propensities(T, C):
-    # estimate treatment distribution for each strata of the confound
-    # directly from the data
-    df = pd.DataFrame(zip(C, T), columns=['C', 'T'])
-    T_levels = set(T)
-    propensities = []
-    for c_level in set(C):
-        subset = df.loc[df.C == c_level]
-        # NOTE: subset.T => transpose
-        p_TgivenC = [
-            float(len(subset.loc[subset['T'] == t])) / len(subset)
-            for t in T_levels
-        ]
-        propensities.append(p_TgivenC[1])
-
-    return propensities
-
-
-# b0  makes treatment (thm?) sepearte more (i.e. give more 1's)
-# b1 1, 10, 100, makes confound (buzzy/not) seperate more (drives means apart)
-# gamma 0 , 1, 4, noise level
-# offset moves propensities towards the middle so sigmoid can split them into some noise
-def simulate_Y(C, T, b0=0.5, b1=10, gamma=0.0, offset=0.75):
-    propensities = estimate_propensities(T, C)
-    # propensities = [0.27, 0.7]
-    out = []
-    test = defaultdict(list)
-    for Ci, Ti in zip(C, T):
-        noise = np.random.normal(0, 1)
-        y0 = b1 * (propensities[Ci] - offset)
-        y1 = b0 + y0
-        y = (1 - Ti) * y0 + Ti * y1 + gamma * noise  # gamma
-        simulated_prob = sigmoid(y)
-        y0 = sigmoid(y0)
-        y1 = sigmoid(y1)
-        threshold = np.random.uniform(0, 1)
-        Y = int(simulated_prob > threshold)
-        out.append(Y)
-        test[Ci, Ti].append(Y)
-
-    return out
-
-
-def sigmoid(x):
-    return 1 / (1 + math.exp(-x))
-
-
-def treatment_from_rating(rating):
-    return int(rating == 5.0)
-
 
 if __name__ == '__main__':
     data = pd.read_csv("test.csv")
@@ -334,7 +276,7 @@ if __name__ == '__main__':
     df['con_found'] = df['name'].apply(Confound);
     df[temp_treatment] = df['rating'].apply(treatment_from_rating);
 
-    df["outcome"] = simulate_Y(C=df['con_found'], T=df[temp_treatment])
+    df["outcome"] = ReviewSimulation.simulate_Y(C=df['con_found'], T=df[temp_treatment])
     pp = DataFramePreprocesser(treatment_col=temp_treatment,
                                outcome_col="outcome",
                                text_col="text",

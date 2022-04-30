@@ -1,4 +1,5 @@
-Given Estimator	 Nuisance Estimator	 Mean			         Median			          Standard deviation
+Estimations Done by Cross-Fitting Double Machine Learning estimator
+Given Estimator	 Nuisance Estimator	 Mean			         Median			          Standard deviation(standard error)
 Tf-idf vectors
 MLPRegressor	MLPRegressor	    -0.043372538856737905	 -0.01474267750244574	  0.09815391819684226
 MLPClassifier	MLPRegressor	    -0.07856102338683171	  0.012312925644058944	  0.25165035441288625
