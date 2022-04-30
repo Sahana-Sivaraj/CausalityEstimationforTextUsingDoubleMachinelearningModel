@@ -14,11 +14,8 @@ from pandas.api.types import is_numeric_dtype
 from gensim.models import Word2Vec
 import nltk
 from nltk.corpus import stopwords
-from sklearn.decomposition import IncrementalPCA    # inital reduction
-from sklearn.manifold import TSNE                   # final reduction
-from textblob import Word
-from tqdm import tqdm
-import Re ReviewSimulation
+from src.ReviewSimulation import ReviewSimulation
+
 
 class DataFramePreprocesser:
     def __init__(self,
@@ -28,7 +25,8 @@ class DataFramePreprocesser:
                  include_cols=None,
                  ignore_cols=None,
                  verbose=1,
-                 word_vec=False):
+                 word_vec=False,
+                 tf_idf=False):
         """
         Instantiates the DataframePreprocessor instance.
         """
@@ -41,6 +39,7 @@ class DataFramePreprocesser:
         self.ignore_cols = ignore_cols
         self.v = verbose
         self.word_vec=word_vec
+        self.tf_idf=tf_idf
         self.word2vec_model = Word2Vec.load("word2vec/word2vecgensimmodel/w2v_features_10minwordcounts_10context.model")
         # self.model=Word2Vec(list(df[self.text_col]), window=10, min_count=2)
         self.stop = stopwords.words('english')
@@ -106,8 +105,8 @@ class DataFramePreprocesser:
                 vocab_df = pd.DataFrame(vectors)
                 vocab_df.to_csv("train_review_word2vec.csv")
                 X = pd.concat([X, vocab_df], axis=1, join='inner')
-                print(X.head(5))
-            else:
+
+            elif self.tf_idf==True:
                 from sklearn.feature_extraction.text import TfidfVectorizer
                 self.tv = TfidfVectorizer(min_df=min_df, max_df=max_df,
                                           ngram_range=ngram_range, stop_words=stop_words)
@@ -233,64 +232,6 @@ class DataFramePreprocesser:
             total.append(avgVector)
         return total
 
-    def runProcessingData(self,path):
-        data = pd.read_csv(path)
-        # data = pd.read_csv("test.csv")
-        temp_treatment = 'treatment'
-        df = data.copy()
-        # name is confound variable
-        Confound = lambda \
-                p: 1 if p == 'All-New Kindle E-reader - Black, 6 Glare-Free Touchscreen Display, Wi-Fi -  Includes Special Offers,,' else 0
-        df['con_found'] = df['name'].apply(Confound);
-        df[temp_treatment] = df['rating'].apply(treatment_from_rating);
-
-        df["outcome"] = simulate_Y(C=df['con_found'], T=df[temp_treatment])
-        pp = DataFramePreprocesser(treatment_col=temp_treatment,
-                                   outcome_col="outcome",
-                                   text_col="text",
-                                   include_cols=[],
-                                   ignore_cols=["id", "categories", "title"],
-                                   verbose=1, word_vec=True)
-
-        dft, x, y, treatment = pp.preprocess(df, training=True)
-        dft.to_csv("preprocessedWord2vec.csv")
-        x.to_csv("Xword2vec.csv")
-        y.to_csv("Yword2vec.csv")
-        treatment.to_csv("Tword2vec.csv")
-        data = pd.concat([x, y, treatment], axis=1)
-        # columns = ['Unnamed: 0']
-        # data.drop(columns, inplace=True, axis=1)
-        data = data.dropna(axis=0, how='any', thresh=None, subset=None, inplace=False)
-        data.to_csv("finalword2vec.csv")
-
-
-
-if __name__ == '__main__':
-    data = pd.read_csv("test.csv")
-    # print(data.head())
-    temp_treatment = 'treatment'
-    df = data.copy()
-    # name is confound variable
-    Confound = lambda \
-        p: 1 if p == 'All-New Kindle E-reader - Black, 6 Glare-Free Touchscreen Display, Wi-Fi -  Includes Special Offers,,' else 0
-    df['con_found'] = df['name'].apply(Confound);
-    df[temp_treatment] = df['rating'].apply(treatment_from_rating);
-
-    df["outcome"] = ReviewSimulation.simulate_Y(C=df['con_found'], T=df[temp_treatment])
-    pp = DataFramePreprocesser(treatment_col=temp_treatment,
-                               outcome_col="outcome",
-                               text_col="text",
-                               include_cols=[],
-                               ignore_cols=["id", "categories", "title"],
-                               verbose=1,word_vec=True)
-
-    dft, x, y, treatment = pp.preprocess(df, training=True)
-    dft.to_csv("word2vec/word2vectfmodel/preprocessedtfWord2vec.csv")
-    x.to_csv("word2vec/word2vectfmodel/Xtfword2vec.csv")
-    y.to_csv("word2vec/word2vectfmodel/Ytfword2vec.csv")
-    treatment.to_csv("word2vec/word2vectfmodel/Ttfword2vec.csv")
-    data=pd.concat([x, y,treatment], axis=1)
-    # columns = ['Unnamed: 0']
-    # data.drop(columns, inplace=True, axis=1)
-    data = data.dropna(axis=0, how='any', thresh=None, subset=None, inplace=False)
-    data.to_csv("word2vec/word2vectfmodel/finaltfword2vec.csv")
+# if __name__ == '__main__':
+#     dataProcessing=DataFramePreprocesser()
+#     dataProcessing.runProcessingGenisimWordVecData()

@@ -1,12 +1,20 @@
+from collections import defaultdict
+import math
+import numpy as np
+import pandas as pd
 class ReviewSimulation():
-    @staticmethod
-    def estimate_propensities(self,T, C):
+
+    def __init__(self, C,T):
+        self.T=T
+        self.C=C
+
+    def estimate_propensities(self):
         # estimate treatment distribution for each strata of the confound
         # directly from the data
-        df = pd.DataFrame(zip(C, T), columns=['C', 'T'])
-        T_levels = set(T)
+        df = pd.DataFrame(zip(self.C, self.T), columns=['C', 'T'])
+        T_levels = set(self.T)
         propensities = []
-        for c_level in set(C):
+        for c_level in set(self.C):
             subset = df.loc[df.C == c_level]
             # NOTE: subset.T => transpose
             p_TgivenC = [
@@ -21,13 +29,12 @@ class ReviewSimulation():
     # b1 1, 10, 100, makes confound (buzzy/not) seperate more (drives means apart)
     # gamma 0 , 1, 4, noise level
     # offset moves propensities towards the middle so sigmoid can split them into some noise
-    @staticmethod
-    def simulate_Y(self,C, T, b0=0.5, b1=10, gamma=0.0, offset=0.75):
-        propensities = estimate_propensities(T, C)
+    def simulate_Y(self,C, b0=0.5, b1=10, gamma=0.0, offset=0.75):
+        propensities = self.estimate_propensities()
         # propensities = [0.27, 0.7]
         out = []
         test = defaultdict(list)
-        for Ci, Ti in zip(C, T):
+        for Ci, Ti in zip(C, self.T):
             noise = np.random.normal(0, 1)
             y0 = b1 * (propensities[Ci] - offset)
             y1 = b0 + y0
@@ -42,10 +49,8 @@ class ReviewSimulation():
 
         return out
 
-    @staticmethod
     def sigmoid(self,x):
         return 1 / (1 + math.exp(-x))
 
-    @staticmethod
     def treatment_from_rating(self,rating):
         return int(rating == 5.0)

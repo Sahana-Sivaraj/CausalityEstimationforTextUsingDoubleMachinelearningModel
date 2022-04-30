@@ -3,6 +3,9 @@ import re
 import numpy as np
 import tensorflow as tf
 
+from src.DataFramePreprocessing import DataFramePreprocesser
+from src.ReviewSimulation import ReviewSimulation
+
 tf.compat.v1.disable_eager_execution()
 import nltk
 import pandas as pd
@@ -11,6 +14,13 @@ from nltk import SnowballStemmer
 
 class Word2Vec:
     def __init__(self, embedding_dim=64, optimizer='sgd', epochs=10000):
+        stopwords = nltk.corpus.stopwords.words("english")
+        tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
+        data = pd.read_csv("test.csv")
+        data['text'] = data['text'].astype(str)
+        data['text'].to_csv("reviews.txt", header=None, index=None, sep='\t'
+                            , mode='a')
+        col_one_list = data['text'].values.tolist()
         sentences = []
         for review in col_one_list:
             sentences.append(self.parseSent(review, tokenizer))
@@ -142,20 +152,4 @@ class Word2Vec:
         dataset = dataset.prefetch(prefetch)
         itr = tf.compat.v1.data.make_initializable_iterator(dataset)
         return itr.initializer, itr.get_next()
-
-
-stopwords = nltk.corpus.stopwords.words("english")
-tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
-data = pd.read_csv("test.csv")
-data['text'] = data['text'].astype(str)
-data['text'].to_csv("reviews.txt", header=None, index=None, sep='\t'
-                    , mode='a')
-col_one_list = data['text'].values.tolist()
-w2v = Word2Vec(optimizer='adam', epochs=100)
-
-# print(sentences[0])
-print("starting prepare_dictionary")
-w2v.train()
-w2v.save()
-
-# hidden layer: which represents word vector eventually
+# hidden layer: which represents word vector

@@ -217,10 +217,12 @@ class DMLNeuralNetwork():
             return 0
 
 
-if __name__ == '__main__':
-    dmlObj = DMLNeuralNetwork()
-    dmlObj.trainWithMLPRegressorDML1Algorithm(path='word2vec/word2vectfmodel/finaltfword2vec.csv',modelName='word2vec/word2vectfmodel/word2vectf');
-    # dmlObj.trainWithMLPClassifierDML1Algorithm(path='word2vec/word2vectfmodel/finaltfword2vec.csv',modelName='word2vec/word2vectfmodel/word2vectf');
+# if __name__ == '__main__':
+    # dmlObj = DMLNeuralNetwork()
+    # dmlObj.trainWithMLPRegressorDML1Algorithm(path='word2vec/word2vectfmodel/finaltfword2vec.csv',
+    #                                           modelName='word2vec/word2vectfmodel/word2vectf')
+    # dmlObj.trainWithMLPClassifierDML1Algorithm(path='word2vec/word2vectfmodel/finaltfword2vec.csv',
+    #                                            modelName='word2vec/word2vectfmodel/word2vectf')
     # dmlObj.trainRandomForestWithDML2();
 
     # load : get the data from file
