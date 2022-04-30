@@ -1,7 +1,7 @@
 import pandas as pd
 
 from src.DataFramePreprocessing import DataFramePreprocesser
-from src.Model import DMLNeuralNetwork
+from src.DMLNeuralNetwork import DMLNeuralNetwork
 from src.ReviewSimulation import ReviewSimulation
 from src.Word2VecModel import Word2Vec
 
