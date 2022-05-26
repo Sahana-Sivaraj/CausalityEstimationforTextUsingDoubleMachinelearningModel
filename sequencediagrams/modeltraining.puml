@@ -1,0 +1,20 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+autonumber 1.1
+actor Researcher
+activate Researcher
+Researcher-> Main: trigger_train_neuralnetwork(data_path)
+activate Main
+Main -> DMLNeuralNetwork: train_with_DML_algorithm()
+activate DMLNeuralNetwork
+DMLNeuralNetwork -> DMLNeuralNetwork: train_dml_model()
+DMLNeuralNetwork -> DMLNeuralNetwork:split_data()
+DMLNeuralNetwork -> DMLNeuralNetwork:estimate_causalilty_scores()
+DMLNeuralNetwork -> DMLNeuralNetwork:save_trained_model()
+DMLNeuralNetwork -> DMLNeuralNetwork:save_estimation_details()
+Main <-- DMLNeuralNetwork: return_summarised_casuality_estimation_scores
+deactivate DMLNeuralNetwork
+Researcher <-Main: display_estimations_scores()
+deactivate Main
+deactivate Researcher
+@enduml

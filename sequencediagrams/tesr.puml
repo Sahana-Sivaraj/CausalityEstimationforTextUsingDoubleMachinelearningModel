@@ -1,0 +1,37 @@
+@startuml
+'https://plantuml.com/activity-diagram-beta
+
+start
+:Provide online reviews dataset;
+:Split the text into tokens;
+:Remove the stopwords from tokens;
+:Lemmatize the tokens;
+if (word_vec) then (true)
+  :convert the text into word2vec text representations;
+else (false)
+:convert the text into word2vec text representations;
+endif
+while (data available)
+:determine treatment variable;
+if(rating==5.0) then (true)
+:set to 1;
+else (false)
+:set to 0;
+endif
+:determine confounded variable based on product_type ;
+:calculate outcome values by using confounded and treatment variable;
+endwhile
+:combine all the data;
+:save the processed data;
+:initiate DML model with processed data and two ML models;
+:define times = 100;
+while( nooftimes!= times)
+:train the ML models;
+:get casual measurements and add them to array;
+endwhile
+: calculate average of casual estimate from array;
+: save the trained model details;
+: display estimates in dashboard;
+stop
+
+@enduml

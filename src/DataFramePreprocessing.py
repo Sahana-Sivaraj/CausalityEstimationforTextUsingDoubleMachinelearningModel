@@ -14,6 +14,7 @@ from pandas.api.types import is_numeric_dtype
 from gensim.models import Word2Vec
 import nltk
 from nltk.corpus import stopwords
+from sklearn.metrics import mean_squared_error
 from src.ReviewSimulation import ReviewSimulation
 
 
@@ -101,7 +102,7 @@ class DataFramePreprocesser:
         # step 4: for text-based confounder, use extracted vocabulary as features
         if self.text_col is not None:
             if self.word_vec==True:
-                vectors = self.loadWord2Vecfeatures(data)
+                vectors = self.loadWord2Vecfeatures(df)
                 vocab_df = pd.DataFrame(vectors)
                 vocab_df.to_csv("train_review_word2vec.csv")
                 X = pd.concat([X, vocab_df], axis=1, join='inner')
@@ -135,21 +136,31 @@ class DataFramePreprocesser:
             stops = set(stopwords.words("english"))
             words = [w for w in words if not w in stops]
         if stemming == True:  # stemming
-            #         stemmer = PorterStemmer()
             stemmer = SnowballStemmer('english')
             words = [stemmer.stem(w) for w in words]
         if split_text == True:  # split text
             return (words)
         return (" ".join(words))
 
+    def parseSent(self,review, tokenizer,remove_stopwords=False):
+        '''
+        Parse text into sentences
+        '''
+        raw_sentences = self.tokenizer.tokenize(review)
+        sentences = []
+        for raw_sentence in raw_sentences:
+            setence=self.cleanText(raw_sentence, remove_stopwords, split_text=True)
+            sentences.append(setence);
+        return sentences
+
     def trainWord2VecModel(self,data):
 
-        pp.text_col = "text"
+        self.text_col = "text"
         sentences = []
-        data[pp.text_col] = data[pp.text_col].astype(str)
-        col_one_list = data[pp.text_col].values.tolist()
+        data[self.text_col] = data[self.text_col].astype(str)
+        col_one_list = data[self.text_col].values.tolist()
         for review in col_one_list:
-            sentences.append(pp.parseSent(review, pp.tokenizer));
+            sentences.append(self.parseSent(review, self.tokenizer));
 
         print("Training Word2Vec model ...\n")
 
@@ -177,19 +188,7 @@ class DataFramePreprocesser:
                 df[col].replace(values, [0, 1], inplace=True)
                 if self.v: print('replaced %s in column "%s" with %s' % (values, col, [0, 1]))
         return df, self._check_binary(df, col)
-
-
-    def parseSent(self,review, tokenizer,remove_stopwords=False):
-        '''
-        Parse text into sentences
-        '''
-        raw_sentences = self.tokenizer.tokenize(review)
-        sentences = []
-        for raw_sentence in raw_sentences:
-            setence=self.cleanText(raw_sentence, remove_stopwords, split_text=True)
-            sentences.append(setence);
-        return sentences
-
+    # check the df col data type whether it is string or numeric the convert it 
     def _check_type(self, df, col):
         dtype = None
         tmp_var = df[df[col].notnull()][col]

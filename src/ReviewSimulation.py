@@ -5,7 +5,9 @@ import pandas as pd
 class ReviewSimulation():
 
     def __init__(self, C,T):
+        # T= treatment variable
         self.T=T
+        # C= confounder variable
         self.C=C
 
     def estimate_propensities(self):
@@ -22,7 +24,6 @@ class ReviewSimulation():
                 for t in T_levels
             ]
             propensities.append(p_TgivenC[1])
-
         return propensities
 
     # b0  makes treatment (thm?) sepearte more (i.e. give more 1's)
@@ -46,11 +47,12 @@ class ReviewSimulation():
             Y = int(simulated_prob > threshold)
             out.append(Y)
             test[Ci, Ti].append(Y)
-
         return out
 
     def sigmoid(self,x):
         return 1 / (1 + math.exp(-x))
 
+    # treatment identification
     def treatment_from_rating(self,rating):
         return int(rating == 5.0)
+

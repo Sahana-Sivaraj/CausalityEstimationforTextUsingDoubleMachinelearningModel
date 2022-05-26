@@ -1,0 +1,24 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+autonumber 1.1
+actor Researcher
+Researcher-> Main: provide_reviews_dataset
+activate Main
+Main -> ReviewSimulation: treatment_from_rating()
+activate ReviewSimulation
+Main <-- ReviewSimulation: return_treatment_caculations
+Main -> ReviewSimulation: simulate_outcome_variable()
+Main <-- ReviewSimulation: return_outcome_caculations
+deactivate ReviewSimulation
+activate DataFramePreprocesser
+Main -> DataFramePreprocesser: initate(data_path,outcome,treatment,confound)
+Main -> DataFramePreprocesser:preprocess()
+DataFramePreprocesser -> DataFramePreprocesser: clean_text_data
+DataFramePreprocesser -> DataFramePreprocesser: convert_text_into_vectors
+Main <-- DataFramePreprocesser:return_preprocessed_data
+Main <-- Main: save_processed_data
+deactivate DataFramePreprocesser
+Main-->Researcher:show_finaldata_set()
+deactivate Main
+deactivate Researcher
+@enduml

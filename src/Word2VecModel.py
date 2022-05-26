@@ -3,9 +3,6 @@ import re
 import numpy as np
 import tensorflow as tf
 
-from src.DataFramePreprocessing import DataFramePreprocesser
-from src.ReviewSimulation import ReviewSimulation
-
 tf.compat.v1.disable_eager_execution()
 import nltk
 import pandas as pd
@@ -14,7 +11,7 @@ from nltk import SnowballStemmer
 
 class Word2Vec:
     def __init__(self, embedding_dim=64, optimizer='sgd', epochs=10000):
-        stopwords = nltk.corpus.stopwords.words("english")
+        self.stopwords = nltk.corpus.stopwords.words("english")
         tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
         data = pd.read_csv("test.csv")
         data['text'] = data['text'].astype(str)
@@ -29,15 +26,15 @@ class Word2Vec:
         self.X, self.Y = self.prepare_dataset(sentences, self.word2idx, self.vocab_size)
         self.embedding_dim = embedding_dim
         self.epochs = epochs
-
+        # embeddings structure setup
         self.W1 = tf.compat.v1.Variable(tf.random.normal([self.vocab_size, self.embedding_dim]))
         self.b1 = tf.compat.v1.Variable(tf.random.normal([self.embedding_dim]))  # bias
         self.W2 = tf.compat.v1.Variable(tf.random.normal([self.embedding_dim, self.vocab_size]))
         self.b2 = tf.compat.v1.Variable(tf.random.normal([self.vocab_size]))
-
+        # traning data setup 
         self.x_train = tf.compat.v1.placeholder(tf.float32, shape=[None, self.vocab_size])
         self.y_train = tf.compat.v1.placeholder(tf.float32, shape=[None, self.vocab_size])
-
+        # layers , cross_entropy_loss and optimizer setup
         self.hidden_layer = tf.add(tf.matmul(self.x_train, self.W1), self.b1)
         self.output_layer = tf.nn.softmax(tf.add(tf.matmul(self.hidden_layer, self.W2), self.b2))
 
@@ -87,7 +84,7 @@ class Word2Vec:
         letters_only = re.sub('[^A-Za-z]+', ' ', text)  # remove non-character
         words = letters_only.lower().split()  # convert to lower case
         if remove_stopwords:  # remove stopword
-            stops = set(stopwords.words("english"))
+            stops = set(self.stopwords.words("english"))
             words = [w for w in words if not w in stops]
         if stemming == True:  # stemming
             #         stemmer = PorterStemmer()
@@ -106,7 +103,8 @@ class Word2Vec:
         return sentences
 
     def prepare_dictionary(self, data):
-        idx = 0
+        # extract word2index, vocab_size and idex2word mapping for traning
+        idx = 0 
         word2idx = {}
         idx2word = {}
         for sentence in data:
@@ -120,13 +118,13 @@ class Word2Vec:
         return vocab_size, word2idx, idx2word
 
     def prepare_dataset(self, data, word2idx, vocab_size, window=5):
+        # data preparation method model traning
         X = []
         Y = []
         for sentence in data:
             for line in sentence:
                 fn = window // 2
                 line_len = len(line)
-
                 if line_len > window:
                     for i in range(line_len):
                         for j in range(window):
@@ -141,15 +139,19 @@ class Word2Vec:
         return X, Y
 
     def onehot_encoding(self, x, y):
+        # data encoding with one-hot technique
         X = tf.one_hot(x, self.vocab_size)
         Y = tf.one_hot(y, self.vocab_size)
         return X, Y
 
     def batch_dataset(self, x, y, batch_size=1024, prefetch=2):
+        # dividing data into batches and apply one-hot code while traning 
         dataset = tf.compat.v1.data.Dataset.from_tensor_slices((x, y))
         dataset = dataset.map(self.onehot_encoding)
         dataset = dataset.batch(batch_size)
         dataset = dataset.prefetch(prefetch)
         itr = tf.compat.v1.data.make_initializable_iterator(dataset)
         return itr.initializer, itr.get_next()
+
+        
 # hidden layer: which represents word vector

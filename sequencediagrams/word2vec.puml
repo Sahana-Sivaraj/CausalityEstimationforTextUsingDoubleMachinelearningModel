@@ -1,0 +1,20 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+autonumber 1.1
+actor Researcher
+activate Researcher
+Researcher-> Main: trigger_prepare_word2vec_vectors(data_path)
+activate Main
+Main -> Word2Vec: trigger_intiate(data_path)
+activate Word2Vec
+Main -> Word2Vec: trigger_train_word2vec(data_path)
+Word2Vec -> Word2Vec:train_the_model()
+Word2Vec -> Word2Vec:save_the_model()
+Main <-- Word2Vec: return_success_message()
+Main -> Main: save_the_word2vec_vectors_in_file()
+Main -> Main:integrate_with_causal_parameters()
+Main -> Main:save_the_data()
+Main --> Researcher::show_finaldata_set()
+deactivate Main
+deactivate Researcher
+@enduml

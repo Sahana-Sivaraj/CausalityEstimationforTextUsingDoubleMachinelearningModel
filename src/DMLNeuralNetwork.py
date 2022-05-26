@@ -57,7 +57,6 @@ class DMLNeuralNetwork():
             # Compute V
             V_comp = D_comp - m_comp
             V_main = D_main - m_main
-
             # We provide two different theta estimators for computing theta
             if (thetaEstimator == "Opt1"):
                 theta_comp = DMLNeuralNetwork.thetaEstimator1(Y_comp, V_comp, D_comp, g_comp)
@@ -72,6 +71,20 @@ class DMLNeuralNetwork():
             # Aggregate theta
         theta = np.mean(result)# coef caculation
         return theta
+
+    @staticmethod
+    def thetaEstimator1(Y, V, D, g):
+        try:
+            return np.mean((V * (Y - g))) / np.mean((V * D))
+        except ZeroDivisionError:
+            return 0
+
+    @staticmethod
+    def thetaEstimator2(Y, V, D, g):
+        try:
+            return np.mean((V * (Y - g))) / np.mean((V * V))
+        except ZeroDivisionError:
+            return 0
 
     def trainWithMLPRegressorDML1Algorithm(self,path,modelName):
         no = 10;
@@ -90,10 +103,14 @@ class DMLNeuralNetwork():
                                 "Opt1")
             print(theta);
             result.append(theta)
+
+        errors=np.std(result) / np.sqrt(len(data))
+
         print("MLPRegressor, Theta: ", result)
         print("MLPRegressor, Std: ", np.std(result))
         print("MLPRegressor, mean: ", np.mean(result))
         print("MLPRegressor, median: ", np.median(result))
+        print(errors)
         # df = pd.DataFrame(result)
         results[len(results)] = {
             'theta_hat': result,
@@ -124,12 +141,25 @@ class DMLNeuralNetwork():
                                 "Opt1")
             print(theta);
             result.append(theta)
+        print(result);
         print("MLPClassifier, Theta: ", result)
         print("MLPClassifier, Std: ", np.std(result))# standard error
         print("MLPClassifier, mean: ", np.mean(result))#coef
         print("MLPClassifier, median: ", np.median(result))
-        plt.hist(result, 50, facecolor='g', alpha=0.75)
-        plt.title("MLPClassifier - Amazon reviews")
+        # plt.hist(result, 50, facecolor='g', alpha=0.75)
+        # plt.title("MLPClassifier - Amazon reviews")
+        import seaborn as sns
+
+        sns.set_theme(style="darkgrid")
+        np.random.seed(0)
+        import matplotlib.pyplot as plt
+
+        x = np.random.randn(50)
+        rug_array = np.array(result)
+
+        ax = sns.distplot(x, rug=False, axlabel="casual DML estimates", label="test")
+        sns.rugplot(rug_array, height=0.05, axis='x', ax=ax)
+
         plt.savefig(modelName+"MLPClassifier - Amazon reviews.png")
         plt.show()
         df = pd.DataFrame(result)
@@ -174,55 +204,42 @@ class DMLNeuralNetwork():
             pkl.dump(results, f)
         return results
 
-    # def dml2(self, data, numberOfFolds=5):
-    #         thetas = []
-    #         predictorVariable = "outcome"
-    #         treatmentVariable = "treatment"
-    #         remainingVariables = data.columns.difference([predictorVariable, treatmentVariable])
-    #         tf = KFold(n_splits=len(data))
-    #         for I_index, IC_index in tf.split(data[remainingVariables],data[treatmentVariable]):
-    #             model_y = RandomForestRegressor()
-    #             model_d = RandomForestRegressor()
-    #             z=data[remainingVariables];
-    #             y=data[predictorVariable];
-    #             d=data[treatmentVariable];
-    #             model_y.fit(z[I_index], y[I_index])
-    #             model_d.fit(z[I_index], d[I_index])
-    #             y_hat = model_y.predict(z[IC_index])
-    #             d_hat = model_d.predict(z[IC_index])
-    #             residuals = d[IC_index] - d_hat
-    #             theta = np.matmul(
-    #                 residuals, (y[IC_index] - y_hat)) / np.matmul(residuals, d[IC_index])
-    #             thetas.append(theta)
-    #
-    #         return np.mean(thetas)
+    def dml2(self, data, numberOfFolds=5):
+            thetas = []
+            predictorVariable = "outcome"
+            treatmentVariable = "treatment"
+            remainingVariables = data.columns.difference([predictorVariable, treatmentVariable])
+            tf = KFold(n_splits=len(data))
+            for I_index, IC_index in tf.split(data[remainingVariables],data[treatmentVariable]):
+                model_y = RandomForestRegressor()
+                model_d = RandomForestRegressor()
+                z=data[remainingVariables];
+                y=data[predictorVariable];
+                d=data[treatmentVariable];
+                model_y.fit(z[I_index], y[I_index])
+                model_d.fit(z[I_index], d[I_index])
+                y_hat = model_y.predict(z[IC_index])
+                d_hat = model_d.predict(z[IC_index])
+                residuals = d[IC_index] - d_hat
+                theta = np.matmul(
+                    residuals, (y[IC_index] - y_hat)) / np.matmul(residuals, d[IC_index])
+                thetas.append(theta)
 
-    @staticmethod
-    def thetaEstimator1(Y, V, D, g):
-        try:
-            return np.mean((V * (Y - g))) / np.mean((V * D))
-            # Fehler wenn, D nur aus 0 besteht, dann wird durch 0 geteilt
-        except ZeroDivisionError:
-            return 0
-##
-# Theta Estimator two
-##
-    # word to vec
-    #finalise the prototype
-    @staticmethod
-    def thetaEstimator2(Y, V, D, g):
-        try:
-            return np.mean((V * (Y - g))) / np.mean((V * V))
-        except ZeroDivisionError:
-            return 0
+            return np.mean(thetas)
 
 
-# if __name__ == '__main__':
-    # dmlObj = DMLNeuralNetwork()
+
+if __name__ == '__main__':
+    dmlObj = DMLNeuralNetwork()
     # dmlObj.trainWithMLPRegressorDML1Algorithm(path='word2vec/word2vectfmodel/finaltfword2vec.csv',
     #                                           modelName='word2vec/word2vectfmodel/word2vectf')
-    # dmlObj.trainWithMLPClassifierDML1Algorithm(path='word2vec/word2vectfmodel/finaltfword2vec.csv',
-    #                                            modelName='word2vec/word2vectfmodel/word2vectf')
+    dmlObj.trainWithMLPClassifierDML1Algorithm(path='D:\Project\code\ReviewsCasualEstimation\word2vec\word2vectfmodel\\finaltfword2vec.csv',
+                                               modelName='D:\Project\code\ReviewsCasualEstimation\word2vec\word2vectfmodel\word2vectf')
+
+    # plt.hist(result, 50,density=True, facecolor='g', alpha=0.75)
+    # plt.title("MLPClassifier - Amazon reviews")
+    # plt.savefig("D:\Project\code\ReviewsCasualEstimation\word2vec\word2vectfmodel\word2vectf" + "MLPClassifier - Amazon reviews.png")
+    # plt.show()
     # dmlObj.trainRandomForestWithDML2();
 
     # load : get the data from file
